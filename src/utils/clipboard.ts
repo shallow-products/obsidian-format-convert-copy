@@ -2,6 +2,34 @@ import { Notice, Platform } from "obsidian";
 import { t } from "../i18n";
 
 /**
+ * Writes every given MIME type to the clipboard in a single operation by handling a synthetic
+ * `copy` event. Returns true only when the handler actually ran and the copy command succeeded.
+ */
+function writeViaCopyEvent(formats: Record<string, string>): boolean {
+	try {
+		const doc = typeof activeDocument !== "undefined" ? activeDocument : document;
+		let handled = false;
+		const onCopy = (event: ClipboardEvent) => {
+			if (!event.clipboardData) return;
+			for (const [mime, content] of Object.entries(formats)) {
+				event.clipboardData.setData(mime, content);
+			}
+			event.preventDefault();
+			handled = true;
+		};
+		doc.addEventListener("copy", onCopy);
+		try {
+			return doc.execCommand("copy") && handled;
+		} finally {
+			doc.removeEventListener("copy", onCopy);
+		}
+	} catch (error) {
+		console.warn("format-convert-copy: copy event write failed, trying standard clipboard", error);
+		return false;
+	}
+}
+
+/**
  * Copies text (and HTML / custom MIME types where supported) to the OS clipboard.
  * Performs optimal fallback handling across mobile (iOS / Android) and desktop environments.
  */
@@ -19,37 +47,16 @@ export async function copyToClipboard(
 	};
 
 	// 1. Custom MIME types (e.g., slack/texty for Desktop Slack native clipboard)
-	// On desktop Electron, writes custom buffers directly via electron.clipboard
+	// Electron's clipboard.writeBuffer replaces the whole clipboard on every call, so multiple formats
+	// cannot coexist that way. Writing through a DOM copy event stores every format in one operation,
+	// letting the paste target pick the richest format it understands (slack/texty) or fall back to text/plain.
 	if (customMimeTypes && Object.keys(customMimeTypes).length > 0) {
 		if (!Platform.isMobile) {
-			try {
-				const windowWithRequire = (typeof activeWindow !== "undefined" ? activeWindow : window) as unknown as {
-					require?: (module: string) => {
-						clipboard?: {
-							write?: (data: { text: string; html?: string }) => void;
-							writeBuffer?: (format: string, buffer: Uint8Array) => void;
-						};
-					};
-				};
-				const electron = typeof windowWithRequire.require === "function" ? windowWithRequire.require("electron") : null;
-
-				if (electron?.clipboard) {
-					if (typeof electron.clipboard.write === "function") {
-						electron.clipboard.write({ text, html });
-					}
-					if (typeof electron.clipboard.writeBuffer === "function") {
-						for (const [mime, content] of Object.entries(customMimeTypes)) {
-							if (content) {
-								const buffer = new TextEncoder().encode(content);
-								electron.clipboard.writeBuffer(mime, buffer);
-							}
-						}
-					}
-					notifySuccess(t("noticeCopied", { format: label }));
-					return true;
-				}
-			} catch (electronError) {
-				console.warn("format-convert-copy: Electron custom MIME write failed, trying standard clipboard", electronError);
+			const formats: Record<string, string> = { "text/plain": text, ...customMimeTypes };
+			if (html) formats["text/html"] = html;
+			if (writeViaCopyEvent(formats)) {
+				notifySuccess(t("noticeCopied", { format: label }));
+				return true;
 			}
 		}
 	}
