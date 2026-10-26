@@ -236,14 +236,14 @@ export function extractCodeBlocks(
 
 	// 1. Extract and protect inline math ($...$) while avoiding false positives for currency ($100)
 	intermediateText = intermediateText.replace(
-		/(?<!\\|\$)\$([^\s$](?:[^$\n]*?[^\s$])?)\$(?!\d|\$)/g,
-		(_match: string, math: string) => {
+		/(^|[^\\$])\$([^\s$](?:[^$\n]*?[^\s$])?)\$(?!\d|\$)/g,
+		(_match: string, prefix: string, math: string) => {
 			if (wrapInlineMath) {
 				blocks.push(wrapInlineMath(math));
 			} else {
 				blocks.push(wrapInline(`$${math}$`));
 			}
-			return `${CODE_MARK}${blocks.length - 1}${CODE_MARK}`;
+			return `${prefix}${CODE_MARK}${blocks.length - 1}${CODE_MARK}`;
 		}
 	);
 
