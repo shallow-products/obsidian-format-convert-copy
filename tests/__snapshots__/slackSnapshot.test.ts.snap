@@ -316,11 +316,12 @@ exports[`Slack Texty Automated Testing & Validation > Snapshot Testing of Compre
     {
       "attributes": {
         "bold": true,
+        "italic": true,
       },
-      "insert": "*Bold Italic",
+      "insert": "Bold Italic",
     },
     {
-      "insert": "*, or ",
+      "insert": ", or ",
     },
     {
       "attributes": {
@@ -3919,15 +3920,10 @@ exports[`Slack Texty Automated Testing & Validation > Snapshot Testing of Compre
     {
       "attributes": {
         "bold": true,
+        "italic": true,
         "strike": true,
       },
-      "insert": "*Crucial Deprecated Warning",
-    },
-    {
-      "attributes": {
-        "strike": true,
-      },
-      "insert": "*",
+      "insert": "Crucial Deprecated Warning",
     },
     {
       "insert": ".",

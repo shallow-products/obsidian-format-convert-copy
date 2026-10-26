@@ -140,7 +140,7 @@ Slack behaves fundamentally differently on Desktop versus Mobile:
 - **Mobile (Slack iOS / Android Native App)**: Does **not** read `slack/texty` from `UIPasteboard`. Instead, it reads standard **`text/html`** and `text/plain`.
 
 To prevent regressions, the plugin strictly branches on `Platform.isMobile`:
-- **Desktop**: writes `slack/texty`, `text/markdown`, and `text/plain`.
+- **Desktop**: writes `slack/texty`, `text/markdown`, and `text/plain` in a single operation via a DOM `copy` event (`execCommand("copy")` + `clipboardData.setData`). Electron's `clipboard.writeBuffer` must not be used: each call replaces the whole clipboard (verified on macOS, Electron 39), which left the clipboard without `text/plain`. If the copy event does not run, it falls back to `text/plain` (mrkdwn).
 - **Mobile**: writes `text/html` (via `convertToSlackMobileHtml`) and `text/plain` (mrkdwn fallback).
 
 ```typescript

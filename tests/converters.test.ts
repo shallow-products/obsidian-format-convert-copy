@@ -162,6 +162,10 @@ describe("slack converter", () => {
 		expect(convertToSlack(md)).toBe("*Bold* and _Italic_ and ~Deleted~");
 	});
 
+	it("converts ***bold italic*** to nested mrkdwn without stray asterisks", () => {
+		expect(convertToSlack("***Both*** and ~~***Gone***~~")).toBe("*_Both_* and ~*_Gone_*~");
+	});
+
 	it("converts headings to bold", () => {
 		const md = "# Heading 1\n## Heading 2";
 		expect(convertToSlack(md)).toBe("*Heading 1*\n*Heading 2*");
@@ -432,15 +436,18 @@ describe("convertMarkdown dispatcher", () => {
 	});
 });
 
-import { FORMAT_ITEMS } from "../src/types";
+import { getFormatItems } from "../src/types";
 
-describe("FORMAT_ITEMS mobile toolbar icons", () => {
+describe("getFormatItems format select items", () => {
 	it("has distinct, valid icons for each format item", () => {
-		const icons = FORMAT_ITEMS.map((item) => item.icon);
+		const items = getFormatItems();
+		const icons = items.map((item) => item.icon);
 		const uniqueIcons = new Set(icons);
-		expect(uniqueIcons.size).toBe(FORMAT_ITEMS.length);
-		for (const item of FORMAT_ITEMS) {
+		expect(uniqueIcons.size).toBe(items.length);
+		for (const item of items) {
 			expect(item.icon).toBeTruthy();
+			expect(item.label).toBeTruthy();
+			expect(item.id).toBeTruthy();
 		}
 	});
 });
@@ -491,9 +498,11 @@ describe("getTargetText selection behavior", () => {
 import { copyToClipboard } from "../src/utils/clipboard";
 import { noticeInstances } from "./__mocks__/obsidian";
 
-describe("copyToClipboard rich text and silent mode", () => {
+describe("copyToClipboard rich text and showNotification", () => {
 	beforeEach(() => {
 		noticeInstances.length = 0;
+		(globalThis as any).window = globalThis;
+		(globalThis as any).activeWindow = globalThis;
 		(globalThis as any).ClipboardItem = class ClipboardItem {
 			constructor(public data: Record<string, Blob>) {}
 		};
@@ -509,22 +518,75 @@ describe("copyToClipboard rich text and silent mode", () => {
 		});
 	});
 
-	it("shows Notice when silent is false (default)", async () => {
-		const success = await copyToClipboard("test text", "Slack", undefined, false);
+	it("shows Notice when showNotification is true (default)", async () => {
+		const success = await copyToClipboard("test text", "Slack");
 		expect(success).toBe(true);
 		expect(noticeInstances.length).toBeGreaterThan(0);
 		expect(noticeInstances[0]).toContain("Slack");
 	});
 
-	it("suppresses Notice when silent is true", async () => {
-		const success = await copyToClipboard("test text", "Slack", undefined, true);
+	it("suppresses Notice when showNotification is false", async () => {
+		const success = await copyToClipboard("test text", "Slack", undefined, false);
 		expect(success).toBe(true);
 		expect(noticeInstances.length).toBe(0);
 	});
 
 	it("writes rich HTML via ClipboardItem when html is provided", async () => {
-		const success = await copyToClipboard("*test*", "Slack", "<b>test</b>", false);
+		const success = await copyToClipboard("*test*", "Slack", "<b>test</b>", true);
 		expect(success).toBe(true);
 		expect(navigator.clipboard.write).toHaveBeenCalled();
+	});
+
+	it("returns false and shows failure notice when clipboard write fails", async () => {
+		(navigator.clipboard.writeText as any).mockRejectedValueOnce(new Error("Permission denied"));
+		const success = await copyToClipboard("failed text", "Plain", undefined, true);
+		expect(success).toBe(false);
+		expect(noticeInstances.length).toBeGreaterThan(0);
+		expect(noticeInstances[0]).toContain("Failed to copy to clipboard");
+	});
+
+	const stubCopyEvent = (execResult: boolean, fireHandler: boolean) => {
+		const listeners: Array<(e: any) => void> = [];
+		const setData = vi.fn();
+		const preventDefault = vi.fn();
+		const stopImmediatePropagation = vi.fn();
+		(globalThis as any).document = {
+			addEventListener: (_: string, fn: (e: any) => void) => listeners.push(fn),
+			removeEventListener: (_: string, fn: (e: any) => void) => {
+				listeners.splice(listeners.indexOf(fn), 1);
+			},
+			execCommand: vi.fn(() => {
+				if (fireHandler) listeners.forEach((fn) => fn({ clipboardData: { setData }, preventDefault, stopImmediatePropagation }));
+				return execResult;
+			}),
+		};
+		(globalThis as any).activeDocument = (globalThis as any).document;
+		return { setData, listeners, stopImmediatePropagation };
+	};
+
+	it("writes all formats in a single copy event so plain text coexists with custom MIME types", async () => {
+		const { setData, listeners, stopImmediatePropagation } = stubCopyEvent(true, true);
+
+		const success = await copyToClipboard("plain", "Slack", undefined, false, {
+			"slack/texty": "{\"data\":1}",
+			"text/markdown": "md",
+		});
+		expect(success).toBe(true);
+		expect(setData).toHaveBeenCalledWith("text/plain", "plain");
+		expect(setData).toHaveBeenCalledWith("slack/texty", "{\"data\":1}");
+		expect(setData).toHaveBeenCalledWith("text/markdown", "md");
+		expect(stopImmediatePropagation).toHaveBeenCalled();
+		expect(listeners).toHaveLength(0);
+		expect(navigator.clipboard.writeText).not.toHaveBeenCalled();
+	});
+
+	it("falls back to plain text when the copy event does not run", async () => {
+		stubCopyEvent(false, false);
+
+		const success = await copyToClipboard("plain", "Slack", undefined, false, {
+			"slack/texty": "{\"data\":1}",
+		});
+		expect(success).toBe(true);
+		expect(navigator.clipboard.writeText).toHaveBeenCalledWith("plain");
 	});
 });
