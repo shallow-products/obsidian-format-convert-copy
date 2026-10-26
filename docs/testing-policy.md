@@ -35,6 +35,8 @@ Format Convert Copy employs a complementary two-tier testing strategy to ensure 
 ### Tier 2: Manual Cross-Platform Verification
 Obsidian plugins interact directly with operating system pasteboards and proprietary target app normalizers (such as Slack's Quill engine, Discord's markdown parser, or WhatsApp's text styling). Some rendering defects (e.g. mobile pasteboard collapsing consecutive empty lines, font column alignment, or touch interaction) can only be verified on physical devices or native client apps.
 
+Before any significant release, run the end-to-end Slack and WhatsApp check described in [`release-verification.md`](./release-verification.md).
+
 ---
 
 ## 2. Canonical Manual Test Suite Structure
