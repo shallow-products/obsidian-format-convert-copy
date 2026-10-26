@@ -62,6 +62,7 @@ Format Convert Copy strictly supports both Desktop (macOS, Windows, Linux) and M
   - Never merge a PR until all CI checks pass (All Green).
 - **Automated GitHub Release via Tags**:
   - Tag push (`X.Y.Z`, **no `v` prefix**; it must exactly match the `manifest.json` version or Obsidian cannot find the release) triggers `.github/workflows/release.yml` which tests, builds, and attaches `main.js`, `manifest.json`, and `styles.css`.
+  - **Before releasing changes to converters, clipboard handling, or regular expressions**, complete the end-to-end Slack and WhatsApp check in [docs/release-verification.md](./docs/release-verification.md) using a beta tag (`X.Y.Z-beta.N`), then tag the final version.
   - Bump versions synchronously using:
     ```bash
     npm version [patch | minor | major]
