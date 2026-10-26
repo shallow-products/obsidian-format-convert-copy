@@ -178,9 +178,9 @@ Indents and brackets must remain intact.
 \`\`\`
 | Command | Description          | Permission |           Notes |
 |:--------|:---------------------|:----------:|----------------:|
-| 16    | Ban user permanently |   Admin    | Logs to channel |
-| 17    | Mute member          | Moderator  |  Timed duration |
-| 18    | Display commands     |  Everyone  | Ephemeral reply |
+| \`/ban\`  | Ban user permanently |   Admin    | Logs to channel |
+| \`/mute\` | Mute member          | Moderator  |  Timed duration |
+| \`/help\` | Display commands     |  Everyone  | Ephemeral reply |
 \`\`\`
 
 ### Pattern B: Japanese / CJK Font Alignment Test

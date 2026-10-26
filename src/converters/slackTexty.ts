@@ -38,7 +38,7 @@ export interface InlineAttr {
  * - Underline: <u>text</u>
  */
 function createInlineTokenRegex(): RegExp {
-	return /(\$(?!\$)([^\s$](?:[^$\n]*?[^\s$])?)\$(?!\d|\$)|\[([^\]]+)\]\(((?:[^()]|\([^()]*\))+)\)|`([^`]+)`|(?:\*\*\*|___)(?=\S)([\s\S]*?\S)(?:\*\*\*|___)|\*\*([\s\S]+?)\*\*|__([\s\S]+?)__|\*([^\s*](?:[\s\S]*?[^\s*])?)\*(?!\*)|_([^\s_](?:[\s\S]*?[^\s_])?)_(?!_)|~~([\s\S]+?)~~|<u>([\s\S]+?)<\/u>)/g;
+	return /(\$(?!\$)([^\s$](?:[^$\n]*?[^\s$])?)\$(?!\d|\$)|\[([^\]]+)\]\(((?:[^()]|\([^()]*\))+)\)|`([^`]+)`|(?:\*\*\*|___)(?=\S)([\s\S]*?\S)(?:\*\*\*|___)|\*\*([\s\S]+?)\*\*|__([\s\S]+?)__|\*([^\s*](?:[\s\S]*?[^\s*])?)\*(?!\*)|_([^\s_](?:[\s\S]*?[^\s_])?)_(?![A-Za-z0-9_])|~~([\s\S]+?)~~|<u>([\s\S]+?)<\/u>)/g;
 }
 
 /**
@@ -67,10 +67,11 @@ export function parseInlineToOps(text: string, currentAttrs: InlineAttr = {}): D
 		const fullMatch = match[0];
 		const [, , math, linkTitle, linkUrl, code, boldItalic, boldAst, boldUnd, italicAst, italicUnd, strike, underline] = match;
 
-		// Single-delimiter italics must not directly follow the same delimiter.
+		// Single-delimiter italics must not directly follow the same delimiter, and an underscore
+		// inside a word (snake_case) is not an italic marker.
 		// Checked here instead of with a lookbehind, which iOS before 16.4 does not support.
 		const prev = matchIndex > 0 ? text[matchIndex - 1] : "";
-		if ((italicAst !== undefined && prev === "*") || (italicUnd !== undefined && prev === "_")) {
+		if ((italicAst !== undefined && prev === "*") || (italicUnd !== undefined && /[A-Za-z0-9_]/.test(prev))) {
 			tokenRegex.lastIndex = matchIndex + 1;
 			continue;
 		}

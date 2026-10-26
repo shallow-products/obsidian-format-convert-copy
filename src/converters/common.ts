@@ -97,6 +97,8 @@ export function extractCodeBlocks(
 ): CodeExtraction {
 	const lines = source.split("\n");
 	const blocks: string[] = [];
+	// Original source of inline code/math placeholders, so table cells can show the real text
+	const rawInline = new Map<number, string>();
 	const outputLines: string[] = [];
 	let i = 0;
 
@@ -219,8 +221,9 @@ export function extractCodeBlocks(
 		}
 
 		if (line.includes("`")) {
-			const replaced = line.replace(/(`+)([\s\S]*?[^`])\1(?!`)/g, (_match: string, _ticks: string, code: string) => {
+			const replaced = line.replace(/(`+)([\s\S]*?[^`])\1(?!`)/g, (match: string, _ticks: string, code: string) => {
 				blocks.push(wrapInline(code));
+				rawInline.set(blocks.length - 1, match);
 				return `${CODE_MARK}${blocks.length - 1}${CODE_MARK}`;
 			});
 			outputLines.push(replaced);
@@ -243,12 +246,13 @@ export function extractCodeBlocks(
 			} else {
 				blocks.push(wrapInline(`$${math}$`));
 			}
+			rawInline.set(blocks.length - 1, `$${math}$`);
 			return `${prefix}${CODE_MARK}${blocks.length - 1}${CODE_MARK}`;
 		}
 	);
 
 	// 3. Extract and align table syntax (tables outside of code blocks)
-	const processedText = extractTables(intermediateText, blocks, wrapBlock);
+	const processedText = extractTables(intermediateText, blocks, wrapBlock, rawInline);
 
 	return { text: processedText, blocks };
 }
@@ -489,8 +493,15 @@ export function formatAlignedTable(tableLines: string[]): string {
 export function extractTables(
 	text: string,
 	blocks: string[],
-	wrapBlock: (code: string, lang?: string) => string
+	wrapBlock: (code: string, lang?: string) => string,
+	rawInline?: Map<number, string>
 ): string {
+	// Tables end up inside a code block, so inline code/math cells must show their original text
+	// instead of leaking the placeholder that was substituted earlier.
+	const placeholder = new RegExp(`${CODE_MARK}(\\d+)${CODE_MARK}`, "g");
+	const restoreRaw = (row: string): string =>
+		rawInline ? row.replace(placeholder, (match, index) => rawInline.get(Number(index)) ?? match) : row;
+
 	const lines = text.split("\n");
 	const outputLines: string[] = [];
 	let i = 0;
@@ -506,7 +517,7 @@ export function extractTables(
 				j++;
 			}
 
-			const alignedTable = formatAlignedTable(tableLines);
+			const alignedTable = formatAlignedTable(tableLines.map(restoreRaw));
 			blocks.push(wrapBlock(alignedTable));
 			outputLines.push(`${CODE_MARK}${blocks.length - 1}${CODE_MARK}`);
 			i = j;
