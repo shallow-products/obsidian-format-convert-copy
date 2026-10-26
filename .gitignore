@@ -5,3 +5,6 @@ data.json
 .DS_Store
 coverage/
 *.log
+
+# Local Obsidian vault for manual verification (plugin files are symlinks to the build output)
+.test-vault/
