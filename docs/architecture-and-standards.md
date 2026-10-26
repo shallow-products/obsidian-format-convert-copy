@@ -73,3 +73,128 @@ Markdown テーブルを Slack や固定幅テキスト形式に変換する際�
    - **幅 2 (Full Width)**: CJK 基本多言語面、CJK 統合漢字拡張（Plane 2: `0x20000`〜`0x323AF`）、絵文字ブロック（`0x1F300`〜`0x1FAFF`, `0x2600`〜`0x27BF`, シンボル類）。
    - 結合絵文字（ZWJ や `\uFE0F` を含むクラスタ）は全体で幅 2 として評価。
 
+---
+
+## 5. クリップボード制御パイプラインとレガシー API (`execCommand`) の完全廃止
+
+### 背景と課題
+過去の実装では、古いブラウザ環境や権限拒絶時のセーフティネットとして `document.execCommand("copy")`（DOM `copy` イベント経由および非表示 `textarea` 要素へのフォールバック）を保持していました。
+しかし、Obsidian のコミュニティディレクトリ自動審査（Automated Review）にて `execCommand is deprecated` が指摘されたことを受け、現代の Obsidian 実行環境における要件を再精査しました。
+
+### 現代の Obsidian 実行環境における検証
+1. **デスクトップ (Mac / Windows / Linux)**:
+   - Chromium ベースの Electron 環境であり、`window.require("electron").clipboard`（OS ネイティブのクリップボード制御）および `navigator.clipboard` が 100% 確実に動作します。
+2. **iOS (iPhone / iPad)**:
+   - 本プラグインの要求環境である `minAppVersion: 1.4.0` を満たす Obsidian（iOS 16 以降）では、WebKit の非同期 Clipboard API（`ClipboardItem`）が標準搭載されており、`execCommand` を必要とする環境は存在しません。
+3. **Android**:
+   - Android System WebView（Chromium 66 以降）において `navigator.clipboard` は完全対応済みです。
+
+### 新しいクリップボード制御パイプライン (`src/utils/clipboard.ts`)
+レガシーな DOM 要素（`textarea`）生成や `execCommand` を完全に撤廃し、以下のクリーンな多層パイプラインに一本化しました：
+
+1. **カスタム MIME 形式 (Slack Texty 形式 - デスクトップ)**:
+   - デスクトップ環境では `electron.clipboard.writeBuffer(mime, new TextEncoder().encode(content))` を用いて `slack/texty` 等の独自バッファを OS クリップボードへ直接書き込みます。
+2. **リッチテキスト HTML 形式**:
+   - デスクトップ: `electron.clipboard.write({ text, html })` で同期的にアトミック書き込み。
+   - モバイル: `navigator.clipboard.write([new ClipboardItem(...)])` による WebKit / Chromium 標準の非同期書き込み。
+3. **プレーンテキスト形式 / フォールバック**:
+   - `navigator.clipboard.writeText(text)` による標準非同期書き込み。
+4. **エラーハンドリング**:
+   - いずれのモダン API も成功しなかった場合は、安全に `return false` とし、Obsidian 標準の通知 UI（`Notice: Failed to copy to clipboard`）を表示。DOM 汚染やレガシー API への依存は一切発生しません。
+
+---
+
+## 6. 通知設定の肯定形モデル化 (`showNotification`) と後方互換マイグレーション
+
+### 背景と課題
+従来のコピー完了通知設定は `silentMode: boolean`（通知を非表示にするトグル）という否定形の設定になっていました。トグルを ON にすると「通知が出なくなる」という挙動は、直感に反しやすく認知的負荷（二重否定の混乱）を生む要因となっていました。
+
+### 設計方針
+1. **肯定形トグルへのリファクタリング (`showNotification`)**:
+   - 項目名を「通知を表示（Show notifications）」、デフォルト値を `true`（通知を表示する）に変更。
+   - 一般的な Obsidian プラグインおよびモダン UI 標準に準拠し、ON = 通知表示、OFF = 通知非表示（旧サイレントモード相当）と直感的に一致させました。
+2. **既存設定のシームレスな自動マイグレーション (`loadSettings`)**:
+   - 既存ユーザーの `data.json` に `silentMode` が保存されていた場合、`showNotification = !loadedData.silentMode` として設定値を反転継承します。
+   - 移行完了後は古いプロパティ `silentMode` を設定オブジェクトから安全に削除（`delete`）し、設定保存時に新しいクリーンなスキーマへと統一されます。
+3. **Dual Support（設定検索 ＆ 従来描画）の整合性維持**:
+   - Obsidian 1.13.0+ の宣言的 API（`getSettingDefinitions`）および旧バージョン向けの命令的描画（`display()`）の双方で、一貫して `showNotification` をコントロール対象としてバインドしています。
+
+---
+
+## 7. 初期導入 UX の最適化とデフォルト設定値の設計方針 (Out-of-the-Box UX)
+
+### 背景と目的
+初期状態において特定の単一形式（Slack）のみが個別アイコンとして有効化されていると、他形式（Discord, WhatsApp, Markdown）の利用者が戸惑い、また UI が乱立する要因となっていました。
+そのため、書式選択の初期設定は「形式を選択してコピー」のみを ON とし、個別形式アイコンおよび PC 版エディタ右クリックメニューはデフォルトで OFF に整理しました。
+
+### 設計方針
+1. **全領域で「形式選択メニュー」のみを初期有効化 (シングルエントリーポイント原則)**:
+   - **リボン / ナビゲーションバー**: `showRibbonMenuIcon: true` のみ ON、個別形式（`showRibbonSlackIcon` 等）はすべて `false`。
+   - **ファイルエクスプローラ**: `showFileMenuItem: true` のみ ON、個別形式（`showFileSlackItem` 等）はすべて `false`。
+   - **エディタ右クリックメニュー**: `showEditorMenuItem: true` のみ ON、個別形式（`showSlackInMenu` 等）はすべて `false` (#109)。
+   - これにより、右クリックメニューやリボンを最小限（1項目のみ）にすっきり保ちつつ、初回ユーザーがどの導線からでもワンタップで全フォーマットを選択・コピーできる統一された UX を実現しました。
+2. **個別形式のオプトイン設計**:
+   - 特定の形式（例: Slack のみ）を頻繁に利用するユーザーは、設定画面から個別の直接コピー項目（リボンアイコン・ファイル項目・右クリック項目）を自由に有効化できます。
+3. **安全かつ予測可能な基本挙動の維持**:
+   - **全面コピー (`emptySelectionBehavior: "document"`)**: 未選択時はノート全体をコピーする標準挙動。
+   - **通知表示 (`showNotification: true`)**: コピー完了の成否がトースト（Notice）で確実にフィードバックされる挙動。
+
+---
+
+## 8. サービス間隔離と UI 配線レジストリパターン (Service Domain Isolation & UI Wiring Registry)
+
+### 背景と設計課題
+各チャット・メッセージングサービス（Slack, Discord, WhatsApp, Markdown）は、「テキストを変換してクリップボードにコピーする」という目的においては同一に見えます。しかし、それぞれのサービスが持つ変換仕様（Slack の mrkdwn / Quill Delta / Texty 形式、Discord の 2000 文字制限・Markdown 記法、WhatsApp のアスタリスク太字やチルダ打ち消し等）は、プラットフォームごとに大きく異なり、将来的な仕様変更や新サービスの追加が独立して発生します。
+
+サービスごとの変換ロジックを無理に共通化・抽象化（継承や過度な共通ヘルパー化）すると、特定サービスの仕様変更が他サービスへ予期せぬ副作用を及ぼす「望ましくない結合（Unwanted Coupling）」を招きます。
+
+### 設計方針
+1. **サービスドメインロジックの完全隔離（コンバーターの独立性）**:
+   - `src/converters/` 配下の各コンバーターは相互に干渉せず、各サービス独自の仕様に特化した独立した実装を維持します。
+   - サービスの仕様に関わるロジックの共通化は行わず、サービス固有の変更を安全にクローズドに保ちます。
+2. **UI 配線レジストリパターン (`FORMAT_DEFINITIONS`) による登録の集約**:
+   - サービス固有のドメインロジックとは完全に切り離された「Obsidian との UI 配線（メタデータ）」のみを `src/types.ts` の `FORMAT_DEFINITIONS` レジストリに一元管理します。
+   - レジストリには、各形式の識別子（`id`）、コマンド ID（`commandId`）、アイコン（`icon`）、多言語化キー（`actionKey`, `cmdKey`）、および各 UI 領域における表示設定キー（`settings.ribbon`, `settings.file`, `settings.editor`）を集約します。
+3. **登録処理の宣言化と DRY 原則の達成 (`src/main.ts`)**:
+   - `registerCommands()`, `registerEditorMenu()`, `registerFileMenu()`, `refreshRibbonIcons()`, `showFormatSelectMenu()` の全導線で、ハードコードされた冗長な個別定義配列を廃止し、`FORMAT_DEFINITIONS` を走査する宣言的ループ処理へと統一しました。
+   - 変換・クリップボード書き込みの一連の処理は `convertAndCopy(text, type)` に集約され、各 UI コールバックのボイラープレートを排除しました。
+4. **歴史的命名との後方互換性担保**:
+   - コマンド ID において、Slack/Discord/WhatsApp が `convert-<id>` であるのに対し、Raw Markdown は歴史的経緯から `copy-raw-markdown` という固有の ID を保持しています。
+   - これらを機械的に生成せず `commandId` プロパティとして明示定義することで、既存ユーザーのホットキー設定やコマンドパレット履歴との 100% 後方互換性を保証しています。
+5. **開放閉鎖の原則 (Open-Closed Principle) に基づく拡張性**:
+   - 将来新しいチャットツールやエクスポート形式を追加する際、`src/converters/` に新コンバーターを追加し、`FORMAT_DEFINITIONS` に 1 エントリを登録するだけで、コマンド・右クリックメニュー・ファイルメニュー・リボンアイコン・形式選択メニューのすべてに自動的かつ安全に配線されます。
+
+---
+
+## 9. 形式選択 UI のマルチモーダル最適化 (Multimodal Format Selection UI)
+
+### 背景と課題 (#112)
+Commander (OC) やコマンドパレット、ショートカットキー（ホットキー）などの「マウスイベント（クリック座標）が存在しない経路」から「形式を選択してコピー」を実行した際、従来のコンテキストメニュー（`Menu.prototype.showAtPosition`）では座標計算のオフセットや内部ビューポート判定のズレにより、メニューが画面左上端 `(0, 0)` 付近に不自然に配置されてしまう問題が発生していました。
+また、右クリックメニュー（エディタおよびファイル一覧）では、コンテキストメニューを圧迫せず直感的に形式を選択できるドリルダウン（サブメニュー）化、およびリボンアイコンでの正確なスナップ配置が求められていました。
+
+### 設計方針
+
+各 UI 導線の操作特性とコンテキストに応じ、最適な UI コンポーネントを出し分けるマルチモーダル設計を採用しました：
+
+1. **コマンド実行（Commander / コマンドパレット / ホットキー）**:
+   - Obsidian 標準の `SuggestModal<FormatItemConfig>` を継承した **`FormatSelectModal`** を画面中央に表示。
+   - キーボード検索・インクリメンタルフィルタリング、矢印キー移動、Enter 決定、Esc キャンセル、およびマウス/タップ選択の双方に完全対応。
+   - ポップアウトウィンドウ（別ウィンドウ）でも `activeWindow` の中央に自動的に整然と描画され、位置ズレが根本的に排除されます。
+2. **右クリックメニュー（エディタ内 ＆ ファイルエクスプローラ）**:
+   - Obsidian 内部 API の `MenuItem.prototype.setSubmenu()` を活用し、**「形式を選択してコピー ▶」のドリルダウン（階層型サブメニュー）** を提供。
+   - ホバー時に右側に「Slack」「Discord」「WhatsApp」「Markdown」が展開され、右クリックメニューを 1 行のみでコンパクトに保ちます。
+   - **グレースフル・デグラデーション (Graceful Degradation)**: `typeof item.setSubmenu === "function"` による機能検知を行い、万が一 `setSubmenu` が存在しない環境ではクリック時に `FormatSelectModal` を開く安全なフォールバックを保証。
+3. **リボンアイコン（左ナビゲーションバー）**:
+   - 座標展開メニューを撤廃し、画面中央の **`FormatSelectModal`** を直接オープンする形に統一。Commander、コマンドパレット、ホットキーと同一の堅牢なモーダル UX を実現しました。
+4. **サブメニュー構築の DRY 原則 (`populateFormatSubmenu`)**:
+   - 右クリックサブメニュー（エディタ ＆ ファイル一覧）への項目追加処理を `populateFormatSubmenu(menu, onSelect)` ヘルパーに集約し、`FORMAT_DEFINITIONS` レジストリに基づく宣言的かつ保守性の高いコードベースを維持します。
+5. **対象ノート解決パイプラインとスプリット分割判定 (`resolveTargetText`)**:
+   - 画面状態とユーザーのフォーカス状況に応じ、以下の優先順位で安全かつ柔軟に対象テキストを決定します：
+     1. **アクティブエディタ最優先**: スプリット分割表示中であっても、カーソルを置いている（アクティブな）エディタが存在する場合は、そのノート全文（または選択テキスト/行）を最優先で対象とします。
+     2. **選択テキスト優先**: フォーカスがエディタ外にある場合でも、いずれかの可視エディタでテキストが範囲選択されていればそれを優先してコピーします。
+     3. **スプリット分割表示の安全ガード**: フォーカスがエディタ外にあり（サイドバー操作直後など）、テキスト未選択の状態で画面上に 2 つ以上の Markdown ノートが同時に並んで表示されている場合にのみ、「対象が特定できない」としてトースト通知（`Multiple notes are open in split view`）を表示し、意図しない別ノートの誤コピーを防止します。
+     4. **単一表示時の自動取得**: 画面上に 1 つだけノートが表示されている場合は、エディタにカーソルが置かれていなくても最前面のノート全文（または設定に応じた現在行）を確実に取得します。
+6. **コマンドパレット・ホットキーの常時利用可能化**:
+   - コマンド登録を `editorCallback` から汎用の `callback` へ移行。これにより、エディタにカーソルが当たっていない状態（閲覧モード、サイドバー操作直後など）であっても、常にコマンドパレット（`Cmd/Ctrl + P`）やホットキーから検索・実行可能になりました。
+
+

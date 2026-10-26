@@ -219,4 +219,23 @@ describe("convertToSlackTexty", () => {
 		expect(text).toContain("\\sum_{i=1}^n x_i * y_i");
 		expect(text).toContain("A = \\pi r^2");
 	});
+
+	it("applies bold and italic together for ***text*** and ___text___", () => {
+		for (const md of ["***Bold Italic***", "___Bold Italic___"]) {
+			const parsed = JSON.parse(convertToSlackTexty(md).texty);
+			expect(parsed.ops[0]).toEqual({ insert: "Bold Italic", attributes: { bold: true, italic: true } });
+		}
+	});
+
+	it("keeps bold+italic inside strikethrough and mixed with plain text", () => {
+		const parsed = JSON.parse(convertToSlackTexty("~~***Crucial Deprecated Warning***~~ and **b** *i*").texty);
+		expect(parsed.ops[0]).toEqual({
+			insert: "Crucial Deprecated Warning",
+			attributes: { strike: true, bold: true, italic: true },
+		});
+		expect(parsed.ops[1]).toEqual({ insert: " and " });
+		expect(parsed.ops[2]).toEqual({ insert: "b", attributes: { bold: true } });
+		expect(parsed.ops[4]).toEqual({ insert: "i", attributes: { italic: true } });
+		expect(JSON.stringify(parsed.ops)).not.toContain("*");
+	});
 });

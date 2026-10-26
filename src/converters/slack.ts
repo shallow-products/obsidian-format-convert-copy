@@ -53,6 +53,10 @@ export function convertToSlack(md: string, options?: SlackConvertOptions): strin
 		boldTargets.push(content);
 		return `${BOLD_MARK}${boldTargets.length - 1}${BOLD_MARK}`;
 	});
+	text = text.replace(/(\*\*\*|___)(.+?)\1/g, (_match: string, _marker: string, content: string) => {
+		boldTargets.push(`_${content}_`);
+		return `${BOLD_MARK}${boldTargets.length - 1}${BOLD_MARK}`;
+	});
 	text = text.replace(/(\*\*|__)(.+?)\1/g, (_match: string, _marker: string, content: string) => {
 		boldTargets.push(content);
 		return `${BOLD_MARK}${boldTargets.length - 1}${BOLD_MARK}`;
