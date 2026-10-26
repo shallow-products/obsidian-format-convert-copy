@@ -104,11 +104,7 @@ export default class FormatConvertPlugin extends Plugin {
 					res.plain,
 					"Slack (Plain Text)",
 					undefined,
-					false,
-					{
-						"slack/texty": res.texty,
-						"text/markdown": res.markdown,
-					}
+					false
 				);
 			},
 		});

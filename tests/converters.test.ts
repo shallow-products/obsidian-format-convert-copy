@@ -541,27 +541,48 @@ describe("copyToClipboard rich text and showNotification", () => {
 		expect(noticeInstances[0]).toContain("Failed to copy to clipboard");
 	});
 
-	it("writes custom MIME types via electron.clipboard on desktop", async () => {
-		const mockWrite = vi.fn();
-		const mockWriteBuffer = vi.fn();
-		(globalThis as any).require = (mod: string) => {
-			if (mod === "electron") {
-				return {
-					clipboard: {
-						write: mockWrite,
-						writeBuffer: mockWriteBuffer,
-					},
-				};
-			}
-			return null;
+	const stubCopyEvent = (execResult: boolean, fireHandler: boolean) => {
+		const listeners: Array<(e: any) => void> = [];
+		const setData = vi.fn();
+		const preventDefault = vi.fn();
+		const stopImmediatePropagation = vi.fn();
+		(globalThis as any).document = {
+			addEventListener: (_: string, fn: (e: any) => void) => listeners.push(fn),
+			removeEventListener: (_: string, fn: (e: any) => void) => {
+				listeners.splice(listeners.indexOf(fn), 1);
+			},
+			execCommand: vi.fn(() => {
+				if (fireHandler) listeners.forEach((fn) => fn({ clipboardData: { setData }, preventDefault, stopImmediatePropagation }));
+				return execResult;
+			}),
 		};
+		(globalThis as any).activeDocument = (globalThis as any).document;
+		return { setData, listeners, stopImmediatePropagation };
+	};
+
+	it("writes all formats in a single copy event so plain text coexists with custom MIME types", async () => {
+		const { setData, listeners, stopImmediatePropagation } = stubCopyEvent(true, true);
+
+		const success = await copyToClipboard("plain", "Slack", undefined, false, {
+			"slack/texty": "{\"data\":1}",
+			"text/markdown": "md",
+		});
+		expect(success).toBe(true);
+		expect(setData).toHaveBeenCalledWith("text/plain", "plain");
+		expect(setData).toHaveBeenCalledWith("slack/texty", "{\"data\":1}");
+		expect(setData).toHaveBeenCalledWith("text/markdown", "md");
+		expect(stopImmediatePropagation).toHaveBeenCalled();
+		expect(listeners).toHaveLength(0);
+		expect(navigator.clipboard.writeText).not.toHaveBeenCalled();
+	});
+
+	it("falls back to plain text when the copy event does not run", async () => {
+		stubCopyEvent(false, false);
 
 		const success = await copyToClipboard("plain", "Slack", undefined, false, {
 			"slack/texty": "{\"data\":1}",
 		});
 		expect(success).toBe(true);
-		expect(mockWrite).toHaveBeenCalled();
-		expect(mockWriteBuffer).toHaveBeenCalledWith("slack/texty", expect.any(Uint8Array));
-		delete (globalThis as any).require;
+		expect(navigator.clipboard.writeText).toHaveBeenCalledWith("plain");
 	});
 });
