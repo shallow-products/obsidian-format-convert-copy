@@ -61,7 +61,7 @@ Format Convert Copy strictly supports both Desktop (macOS, Windows, Linux) and M
   - After pushing branches or opening PRs, agents must verify GitHub Actions CI status (`gh pr checks <PR>` or `gh run view`).
   - Never merge a PR until all CI checks pass (All Green).
 - **Automated GitHub Release via Tags**:
-  - Tag push (`vX.Y.Z`) triggers `.github/workflows/release.yml` which tests, builds, and attaches `main.js`, `manifest.json`, and `styles.css`.
+  - Tag push (`X.Y.Z`, **no `v` prefix**; it must exactly match the `manifest.json` version or Obsidian cannot find the release) triggers `.github/workflows/release.yml` which tests, builds, and attaches `main.js`, `manifest.json`, and `styles.css`.
   - Bump versions synchronously using:
     ```bash
     npm version [patch | minor | major]
