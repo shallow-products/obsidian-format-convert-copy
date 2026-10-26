@@ -20,6 +20,7 @@ const en = {
 	actionCopyWhatsApp: "Copy for WhatsApp",
 	actionCopyRaw: "Copy as raw Markdown",
 	actionChooseMenu: "Convert and copy...",
+	placeholderSelectFormat: "Choose a format to copy...",
 
 	// Notices
 	noticeCopied: "Copied for {format}",
@@ -27,6 +28,7 @@ const en = {
 	noticeFailed: "Failed to copy to clipboard",
 	noticeNoActiveNote: "No active note to copy",
 	noticeReadFailed: "Failed to read note content",
+	noticeSplitAmbiguous: "Multiple notes are open in split view. Please select text or focus on a note.",
 
 	// Ribbon / Navigation Bar Settings
 	settingsRibbonHeadingDesktop: "Left Ribbon (Desktop)",
@@ -64,6 +66,8 @@ const en = {
 	settingsEditorDiscordName: "Discord format",
 	settingsEditorWhatsAppName: "WhatsApp format",
 	settingsEditorRawName: "Markdown format",
+	settingsEditorMenuName: "Format selection menu",
+	settingsEditorMenuDesc: "Shows a format selection menu when right-clicking inside the editor.",
 
 	// Behavior & Notifications Settings
 	settingsBehaviorHeading: "Copy Behavior & Notifications",
@@ -71,8 +75,8 @@ const en = {
 	settingsEmptySelectionDesc: "Choose what to copy when no text is selected in the editor.",
 	settingsEmptySelectionDoc: "Entire note (default)",
 	settingsEmptySelectionLine: "Current line (cursor line)",
-	settingsSilentModeName: "Silent mode",
-	settingsSilentModeDesc: "Suppress success toast notifications for uninterrupted copying. Error notifications will still be displayed.",
+	settingsShowNotificationName: "Show notifications",
+	settingsShowNotificationDesc: "Display toast notifications when copying succeeds. Error notifications will still be displayed.",
 };
 
 const ja: typeof en = {
@@ -95,6 +99,7 @@ const ja: typeof en = {
 	actionCopyWhatsApp: "WhatsApp形式でコピー",
 	actionCopyRaw: "Markdown形式でコピー",
 	actionChooseMenu: "形式を選択してコピー",
+	placeholderSelectFormat: "コピーする形式を選択...",
 
 	// Notices
 	noticeCopied: "{format}形式でコピーしました",
@@ -102,6 +107,7 @@ const ja: typeof en = {
 	noticeFailed: "クリップボードへのコピーに失敗しました",
 	noticeNoActiveNote: "対象のノートが開かれていません",
 	noticeReadFailed: "ノートの読み込みに失敗しました",
+	noticeSplitAmbiguous: "画面が分割表示されているため、対象のノートを特定できません。文字を選択するかノートをアクティブにしてください。",
 
 	// Ribbon / Navigation Bar Settings
 	settingsRibbonHeadingDesktop: "画面左リボン（デスクトップ）",
@@ -139,6 +145,8 @@ const ja: typeof en = {
 	settingsEditorDiscordName: "Discord形式",
 	settingsEditorWhatsAppName: "WhatsApp形式",
 	settingsEditorRawName: "Markdown形式",
+	settingsEditorMenuName: "形式選択メニュー",
+	settingsEditorMenuDesc: "エディタ内の右クリック時に形式選択メニューを表示します。",
 
 	// Behavior & Notifications Settings
 	settingsBehaviorHeading: "コピー動作・通知設定",
@@ -146,8 +154,8 @@ const ja: typeof en = {
 	settingsEmptySelectionDesc: "エディタで文字を選択していない状態でコピーを実行した際の対象を指定します。",
 	settingsEmptySelectionDoc: "ノート全体（全文）",
 	settingsEmptySelectionLine: "カーソル行（現在の1行）",
-	settingsSilentModeName: "サイレントモード",
-	settingsSilentModeDesc: "コピー成功時の画面上部トースト通知を非表示にします（エラー時の通知は維持されます）。",
+	settingsShowNotificationName: "通知を表示",
+	settingsShowNotificationDesc: "コピー成功時にトースト通知を表示します（エラー時の通知は維持されます）。",
 };
 
 export type TranslationKey = keyof typeof en;

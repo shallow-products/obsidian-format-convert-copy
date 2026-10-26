@@ -34,8 +34,8 @@ Designed from the ground up for seamless cross-platform usage across **Desktop (
   - Wikilink embeds (`![[screenshot.png|300]]`, `![[document.pdf]]`) are cleanly converted to readable placeholders (`[image: screenshot.png]`, `[attachment: document.pdf]`).
 - 🔒 **Security First (URL Scheme Sanitization)**:
   - Validates URL schemes in links, blocking dangerous protocols like `javascript:` and `data:`.
-- 🔕 **Customizable Notification (Silent Mode)**:
-  - Option to suppress success Notice toasts for uninterrupted high-frequency copying.
+- 🔔 **Customizable Notification**:
+  - Toggle copy success toast notifications on or off for seamless, uninterrupted workflows. Error notifications will always be displayed.
 - 🎯 **Smart Empty Selection**:
   - Configurable behavior when no text is selected: copy the **entire note** or just the **current cursor line**.
 
@@ -73,17 +73,24 @@ Designed from the ground up for seamless cross-platform usage across **Desktop (
 
 ### 1. Navigation Bar / Ribbon Icons
 Click or tap the ribbon icon (left ribbon on desktop, navigation bar on mobile) to immediately convert and copy:
-- Individual direct buttons (Slack, Discord, WhatsApp, Markdown) can be enabled in Settings.
-- Or use the **Format Selection Menu** (`copy` icon) to select from a popup menu.
+- By default, only the **Format Selection Menu** (`copy`) icon is enabled, allowing you to choose any format on tap.
+- Individual direct copy buttons (Slack, Discord, WhatsApp, Markdown) can be enabled or customized in Settings.
 
 ### 2. Mobile Keyboard Toolbar (iOS / Android)
 Add Format Convert Copy commands to your Obsidian Mobile Toolbar under **Settings > Mobile > Manage toolbar options**:
 - Each command has a distinct icon so they are easily recognizable above the keyboard.
 
 ### 3. File Explorer Menu (Long-Press / Right-Click)
-In the file tree, right-click (desktop) or long-press (mobile) any Markdown note to copy its contents in your preferred format.
+In the file tree, right-click (desktop) or long-press (mobile) any Markdown note to copy its contents:
+- By default, the **Format Selection Menu** is enabled in the file menu to choose any format.
+- Individual direct copy items (Slack, Discord, WhatsApp, Markdown) can be enabled in Settings.
 
-### 4. Command Palette & Hotkeys
+### 4. Desktop Editor Context Menu (Right-Click)
+Right-click inside the editor on desktop to convert and copy text:
+- By default, the **Format Selection Menu** is enabled to choose any format from a popup menu.
+- Individual direct format items (Slack, Discord, WhatsApp, Markdown) can be enabled in Settings.
+
+### 5. Command Palette & Hotkeys
 Open the Command Palette (`Ctrl/Cmd + P`) and search for:
 - `Format Convert Copy: Convert and copy for Slack` (Japanese: `Slack形式に変換してコピー`)
 - `Format Convert Copy: Convert and copy for Discord` (Japanese: `Discord形式に変換してコピー`)

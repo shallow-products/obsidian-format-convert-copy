@@ -1,9 +1,16 @@
-/* obsidian-format-convert-copy */
+/* obsidian-format-convert-copy styles */
 
-.format-convert-hidden-textarea {
-	position: fixed;
-	left: -9999px;
-	top: -9999px;
-	opacity: 0;
-	pointer-events: none;
+.format-convert-modal-item {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.format-convert-modal-icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 18px;
+	height: 18px;
+	color: var(--text-muted);
 }
