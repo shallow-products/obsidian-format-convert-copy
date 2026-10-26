@@ -162,6 +162,10 @@ describe("slack converter", () => {
 		expect(convertToSlack(md)).toBe("*Bold* and _Italic_ and ~Deleted~");
 	});
 
+	it("converts ***bold italic*** to nested mrkdwn without stray asterisks", () => {
+		expect(convertToSlack("***Both*** and ~~***Gone***~~")).toBe("*_Both_* and ~*_Gone_*~");
+	});
+
 	it("converts headings to bold", () => {
 		const md = "# Heading 1\n## Heading 2";
 		expect(convertToSlack(md)).toBe("*Heading 1*\n*Heading 2*");

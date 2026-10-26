@@ -31,13 +31,14 @@ export interface InlineAttr {
  * - Inline math: $formula$
  * - Link: [title](url)
  * - Inline code: `code`
+ * - Bold + italic: ***text*** or ___text___
  * - Bold: **text** or __text__
  * - Italic: *text* or _text_
  * - Strikethrough: ~~text~~
  * - Underline: <u>text</u>
  */
 function createInlineTokenRegex(): RegExp {
-	return /(\$(?!\$)([^\s$](?:[^$\n]*?[^\s$])?)\$(?!\d|\$)|\[([^\]]+)\]\(((?:[^()]+|\([^()]*\))+)\)|`([^`]+)`|\*\*([\s\S]+?)\*\*|__([\s\S]+?)__|(?<!\*)\*([^\s*](?:[\s\S]*?[^\s*])?)\*(?!\*)|(?<!_)_([^\s_](?:[\s\S]*?[^\s_])?)_(?!_)|~~([\s\S]+?)~~|<u>([\s\S]+?)<\/u>)/g;
+	return /(\$(?!\$)([^\s$](?:[^$\n]*?[^\s$])?)\$(?!\d|\$)|\[([^\]]+)\]\(((?:[^()]+|\([^()]*\))+)\)|`([^`]+)`|(?:\*\*\*|___)(?=\S)([\s\S]+?)(?<=\S)(?:\*\*\*|___)|\*\*([\s\S]+?)\*\*|__([\s\S]+?)__|(?<!\*)\*([^\s*](?:[\s\S]*?[^\s*])?)\*(?!\*)|(?<!_)_([^\s_](?:[\s\S]*?[^\s_])?)_(?!_)|~~([\s\S]+?)~~|<u>([\s\S]+?)<\/u>)/g;
 }
 
 /**
@@ -68,7 +69,7 @@ export function parseInlineToOps(text: string, currentAttrs: InlineAttr = {}): D
 		}
 
 		const fullMatch = match[0];
-		const [, , math, linkTitle, linkUrl, code, boldAst, boldUnd, italicAst, italicUnd, strike, underline] = match;
+		const [, , math, linkTitle, linkUrl, code, boldItalic, boldAst, boldUnd, italicAst, italicUnd, strike, underline] = match;
 
 		if (math !== undefined) {
 			ops.push({
@@ -87,6 +88,8 @@ export function parseInlineToOps(text: string, currentAttrs: InlineAttr = {}): D
 				insert: code,
 				attributes: { ...currentAttrs, code: true },
 			});
+		} else if (boldItalic !== undefined) {
+			ops.push(...parseInlineToOps(boldItalic, { ...currentAttrs, bold: true, italic: true }));
 		} else if (boldAst !== undefined || boldUnd !== undefined) {
 			const inner = boldAst ?? boldUnd;
 			ops.push(...parseInlineToOps(inner, { ...currentAttrs, bold: true }));
