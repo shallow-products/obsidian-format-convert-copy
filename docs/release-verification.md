@@ -92,10 +92,7 @@ For each source below, copy the fixture with the matching command (nothing selec
 
 "Native" must match the per-service checklist in section 5. "Readable" means content is complete, in order, with no HTML, JSON, or placeholder characters; styling differences caused by another service's syntax are expected and acceptable. Examples seen with 0.3.40: Slack's `*bold*` shows as italic in Discord, and Slack's `<url|title>` link is not clickable in Discord or WhatsApp.
 
-Known limitations observed with 0.3.40 (record, do not treat as new regressions unless they get worse):
-
-- A table cell that contains inline code (for example `` `/ban` ``) leaks a private-use marker and an index number in the Discord, WhatsApp, and Slack plain-text outputs. Slack desktop rich text is not affected.
-- In Slack desktop rich text, `snake_case_word` renders with the middle word in italics.
+Slack's composer quirk: pasting raw Markdown that starts with `#` turns the draft into a heading, and the heading state stays after the draft is cleared, so later pastes look entirely bold. Switch to another channel and back to reset the composer, then continue.
 
 ### 4.7 Clean up
 
