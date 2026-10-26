@@ -15,13 +15,15 @@ function writeViaCopyEvent(formats: Record<string, string>): boolean {
 				event.clipboardData.setData(mime, content);
 			}
 			event.preventDefault();
+			// Stop the focused editor's own copy handler from adding a stray text/html of its selection
+			event.stopImmediatePropagation();
 			handled = true;
 		};
-		doc.addEventListener("copy", onCopy);
+		doc.addEventListener("copy", onCopy, true);
 		try {
 			return doc.execCommand("copy") && handled;
 		} finally {
-			doc.removeEventListener("copy", onCopy);
+			doc.removeEventListener("copy", onCopy, true);
 		}
 	} catch (error) {
 		console.warn("format-convert-copy: copy event write failed, trying standard clipboard", error);
