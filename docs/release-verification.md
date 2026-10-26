@@ -77,7 +77,27 @@ Some apps cannot read the rich clipboard formats the plugin writes. The plain-te
 3. Check that the result is readable Slack-style text: `*bold*` headings, `•` bullets, backtick code and fenced code blocks, `>` quotes, `<url|title>` links. It must contain no HTML tags, no JSON, and no private-use marker characters.
 4. Close the document without saving.
 
-### 4.6 Clean up
+### 4.6 Cross-paste matrix
+
+Users paste the output into apps it was not made for. The compact fixture [`docs/fixtures/cross-paste-smoke.md`](./fixtures/cross-paste-smoke.md) (about 430 characters, so it also fits Discord's 2000-character limit) covers headings, inline styles, links, lists, checklists, quotes, a code block, a table with an inline-code cell and CJK text, math, currency, snake_case, a wikilink alias, and an embed.
+
+For each source below, copy the fixture with the matching command (nothing selected), read the clipboard text once, then paste into every target. **Do not send.** Clear each draft before the next paste.
+
+| Source (copy command) | Slack | Discord | WhatsApp | Plain-text editor |
+|---|---|---|---|---|
+| Slack | native rich text | readable | readable | readable Slack text |
+| Discord | readable | native | readable | raw text |
+| WhatsApp | readable | readable | native | raw text |
+| Raw Markdown | Slack formats it | readable | readable | raw text |
+
+"Native" must match the per-service checklist in section 5. "Readable" means content is complete, in order, with no HTML, JSON, or placeholder characters; styling differences caused by another service's syntax are expected and acceptable. Examples seen with 0.3.40: Slack's `*bold*` shows as italic in Discord, and Slack's `<url|title>` link is not clickable in Discord or WhatsApp.
+
+Known limitations observed with 0.3.40 (record, do not treat as new regressions unless they get worse):
+
+- A table cell that contains inline code (for example `` `/ban` ``) leaks a private-use marker and an index number in the Discord, WhatsApp, and Slack plain-text outputs. Slack desktop rich text is not affected.
+- In Slack desktop rich text, `snake_case_word` renders with the middle word in italics.
+
+### 4.7 Clean up
 
 1. Close the note tab and delete `zz-format-convert-test.md`.
 2. Confirm the vault contains no leftover test files.
@@ -89,6 +109,8 @@ Some apps cannot read the rich clipboard formats the plugin writes. The plain-te
 **Discord**: `#`/`##`/`###` headings, H4 and below as bold, `__bold__` converted to `**`, underline as `__text__`, strikethrough, inline code, spoilers, links, 10-level list nesting, checklists with strikethrough on completed items, quotes and callouts, code blocks, tables in aligned monospace blocks including CJK text and **inline code inside table cells**, math protected in code, currency amounts left alone.
 
 **Plain-text fallback**: readable Slack-style text as described in 4.5.
+
+**Cross-paste**: every cell of the matrix in 4.6 is readable and free of HTML, JSON, and placeholder characters.
 
 **Slack**: headings as bold, bold/italic/underline/strikethrough, inline code, links, bullet lists to 5 levels for 2-space, 4-space, and tab indentation, numbered lists to 5 levels, checklists with strikethrough on completed items, quotes and callouts, code blocks, aligned tables including CJK text, math, balanced parentheses in URLs, blank-line handling.
 
@@ -115,10 +137,11 @@ Record the result in the release PR or issue, without personal data:
 
 ```
 Version under test: X.Y.Z-beta.N (confirmed from installed manifest.json)
-Fixtures: slack-comprehensive-test, whatsapp-comprehensive-test, discord-comprehensive-test [, slack-edge-cases]
+Fixtures: slack-comprehensive-test, whatsapp-comprehensive-test, discord-comprehensive-test, cross-paste-smoke [, slack-edge-cases]
 WhatsApp: PASS / FAIL (details)
 Slack: PASS / FAIL (details)
 Discord: PASS / FAIL (details, number of chunks)
 Plain-text fallback: PASS / FAIL (details)
+Cross-paste matrix: PASS / FAIL per cell (details)
 Nothing was sent; drafts cleared; temporary note deleted.
 ```
