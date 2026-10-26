@@ -69,7 +69,7 @@ export function formatInlineSlackMobileHtml(line: string, depth = 0): string {
 
 	// 3. Extract hyperlinks (protect URLs containing _ or * from italic/bold formatting)
 	const linkBlocks: string[] = [];
-	text = text.replace(/\[([^\]]+)\]\(((?:[^()]+|\([^()]*\))+)\)/g, (_match: string, title: string, url: string) => {
+	text = text.replace(/\[([^\]]+)\]\(((?:[^()]|\([^()]*\))+)\)/g, (_match: string, title: string, url: string) => {
 		const cleanUrl = url.trim();
 		if (isSafeUrl(cleanUrl)) {
 			const formattedTitle = formatInlineSlackMobileHtml(title, depth + 1);

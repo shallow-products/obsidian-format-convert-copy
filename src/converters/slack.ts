@@ -71,7 +71,7 @@ export function convertToSlack(md: string, options?: SlackConvertOptions): strin
 
 	// Strikethrough, links, and bullet points
 	text = text.replace(/~~(.+?)~~/g, "~$1~");
-	text = text.replace(/\[([^\]]+)\]\(((?:[^()]+|\([^()]*\))+)\)/g, (_match: string, title: string, url: string) => {
+	text = text.replace(/\[([^\]]+)\]\(((?:[^()]|\([^()]*\))+)\)/g, (_match: string, title: string, url: string) => {
 		const cleanUrl = url.trim();
 		if (isSafeUrl(cleanUrl)) {
 			return `<${cleanUrl}|${title}>`;

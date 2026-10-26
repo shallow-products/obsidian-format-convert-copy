@@ -63,7 +63,7 @@ export function convertToWhatsApp(md: string): string {
 	const urls: string[] = [];
 
 	// 1. Expand Markdown links: [title](url) -> title (url)
-	text = text.replace(/\[([^\]]+)\]\(((?:[^()]+|\([^()]*\))+)\)/g, (_match: string, title: string, rawUrl: string) => {
+	text = text.replace(/\[([^\]]+)\]\(((?:[^()]|\([^()]*\))+)\)/g, (_match: string, title: string, rawUrl: string) => {
 		const cleanUrl = rawUrl.trim();
 		if (!isSafeUrl(cleanUrl)) {
 			return title;
