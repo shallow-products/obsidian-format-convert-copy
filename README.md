@@ -1,8 +1,8 @@
 # Format Convert Copy
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Build & Test](https://github.com/shallow1992/obsidian-format-convert-copy/actions/workflows/build-test.yml/badge.svg)](https://github.com/shallow1992/obsidian-format-convert-copy/actions/workflows/build-test.yml)
-[![Latest Release](https://img.shields.io/github/v/release/shallow1992/obsidian-format-convert-copy)](https://github.com/shallow1992/obsidian-format-convert-copy/releases/latest)
+[![Build & Test](https://github.com/shallow-products/obsidian-format-convert-copy/actions/workflows/build-test.yml/badge.svg)](https://github.com/shallow-products/obsidian-format-convert-copy/actions/workflows/build-test.yml)
+[![Latest Release](https://img.shields.io/github/v/release/shallow-products/obsidian-format-convert-copy)](https://github.com/shallow-products/obsidian-format-convert-copy/releases/latest)
 [![Obsidian](https://img.shields.io/badge/Obsidian-Desktop%20%26%20Mobile-7C3AED.svg)](https://obsidian.md)
 
 **Format Convert Copy** is a lightning-fast Obsidian plugin that converts selected Markdown text or active notes into **Slack**, **Discord**, and **WhatsApp** formats—or copies clean raw Markdown—with a single tap or shortcut.
@@ -110,11 +110,11 @@ Open the Command Palette (`Ctrl/Cmd + P`) and search for:
 ### Via BRAT (Beta Testing)
 1. Install the [Obsidian42 - BRAT](https://github.com/TfTHacker/obsidian42-brat) plugin.
 2. Go to **Settings > BRAT > Add Beta plugin**.
-3. Enter `shallow1992/obsidian-format-convert-copy`.
+3. Enter `shallow-products/obsidian-format-convert-copy`.
 4. BRAT will automatically download the latest release and keep it updated.
 
 ### Manual Installation
-1. Download `main.js`, `manifest.json`, and `styles.css` from the [Latest Release](https://github.com/shallow1992/obsidian-format-convert-copy/releases).
+1. Download `main.js`, `manifest.json`, and `styles.css` from the [Latest Release](https://github.com/shallow-products/obsidian-format-convert-copy/releases).
 2. Create a folder named `format-convert-copy` in your vault's plugin directory:
    `your-vault/.obsidian/plugins/format-convert-copy/`
 3. Copy the downloaded files into that folder.

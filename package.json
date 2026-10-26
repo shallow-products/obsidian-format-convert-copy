@@ -22,16 +22,16 @@
     "clipboard",
     "formatter"
   ],
-  "author": "shallow1992",
+  "author": "shallow-products",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/shallow1992/obsidian-format-convert-copy.git"
+    "url": "https://github.com/shallow-products/obsidian-format-convert-copy.git"
   },
   "bugs": {
-    "url": "https://github.com/shallow1992/obsidian-format-convert-copy/issues"
+    "url": "https://github.com/shallow-products/obsidian-format-convert-copy/issues"
   },
-  "homepage": "https://github.com/shallow1992/obsidian-format-convert-copy#readme",
+  "homepage": "https://github.com/shallow-products/obsidian-format-convert-copy#readme",
   "devDependencies": {
     "@types/node": "^26.6.5",
     "esbuild": "^0.28.2",
