@@ -7,6 +7,9 @@ updates:
     open-pull-requests-limit: 5
     labels:
       - "dependencies"
+    groups:
+      npm-minor-patch:
+        update-types: ["minor", "patch"]
     ignore:
       # Keep type definitions aligned with the Node 26 runtime used in CI
       - dependency-name: "@types/node"
@@ -19,3 +22,6 @@ updates:
     open-pull-requests-limit: 5
     labels:
       - "dependencies"
+    groups:
+      actions-minor-patch:
+        update-types: ["minor", "patch"]
