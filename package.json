@@ -33,7 +33,7 @@
   },
   "homepage": "https://github.com/shallow-products/obsidian-format-convert-copy#readme",
   "devDependencies": {
-    "@types/node": "^26.6.5",
+    "@types/node": "^26.6.6",
     "esbuild": "^0.28.2",
     "obsidian": "latest",
     "tslib": "^2.6.0",
